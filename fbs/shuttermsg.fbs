@@ -1,0 +1,7 @@
+namespace shuttermsg;
+
+table Shuttermsg {
+    // TODO!
+}
+
+root_type Shuttermsg;

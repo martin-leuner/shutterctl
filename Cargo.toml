@@ -5,3 +5,8 @@ authors = ["Martin Leuner <martin.leuner@rwth-aachen.de>"]
 edition = "2018"
 
 [dependencies]
+flatbuffers = "0.8.4"
+flatc-rust = "0.2.0"
+
+[build-dependencies]
+flatc-rust = "*"

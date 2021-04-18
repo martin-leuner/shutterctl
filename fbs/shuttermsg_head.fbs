@@ -1,0 +1,27 @@
+namespace shuttermsg;
+
+enum Version : ubyte {
+    Initial
+}
+
+union CryptoParam {
+    None,
+    NaClSecretBox
+}
+
+table None {
+}
+
+table NaClSecretBox {
+    session:ubyte;
+    nonce:[ubyte];
+    mac:[ubyte];
+}
+
+table Shutterheader {
+    version:Version;
+    crypt:CryptoParam;
+    payload:[ubyte];
+}
+
+root_type Shutterheader;
