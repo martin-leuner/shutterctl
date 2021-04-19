@@ -1,6 +1,6 @@
 namespace shuttermsg;
 
-enum Version : ubyte {
+enum Version : uint8 {
     Initial
 }
 
@@ -13,15 +13,15 @@ table None {
 }
 
 table NaClSecretBox {
-    session:ubyte;
-    nonce:[ubyte];
-    mac:[ubyte];
+    session:uint8;
+    nonce:[uint8];
+    mac:[uint8];
 }
 
 table Shutterheader {
     version:Version;
     crypt:CryptoParam;
-    payload:[ubyte];
+    payload:[uint8];
 }
 
 root_type Shutterheader;

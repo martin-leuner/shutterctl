@@ -1,7 +1,59 @@
 namespace shuttermsg;
 
+
+enum ErrorCode : uint16 {
+    Ok
+}
+
+table RspStatus {
+    code:ErrorCode;
+    what:string;
+}
+
+
+enum DriveCmdType : uint8 {
+    Stop,
+    Up,
+    Down,
+    TargetPercentage
+}
+
+table DriveInstruction {
+    motor:uint8;
+    cmd:DriveCmdType = Stop;
+    target_percentage:uint8;
+}
+
+table CmdDrive {
+    motors:[DriveInstruction];
+}
+
+
+table CmdSystemState {
+}
+
+table ShutterState {
+    id:uint8;
+    description:string;
+    known_min_percentage:uint8 = 0;
+    known_max_percentage:uint8 = 100;
+    moving:DriveCmdType = Stop;
+}
+
+table RspSystemState {
+    shutters:[ShutterState];
+}
+
+
+union Message {
+    RspStatus,
+    CmdDrive,
+    CmdSystemState,
+    RspSystemState,
+}
+
 table Shuttermsg {
-    // TODO!
+    msg:Message;
 }
 
 root_type Shuttermsg;
