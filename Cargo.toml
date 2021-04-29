@@ -5,8 +5,15 @@ authors = ["Martin Leuner <martin.leuner@rwth-aachen.de>"]
 edition = "2018"
 
 [dependencies]
-flatbuffers = "0.8.4"
+flatbuffers = "0.7.0"
 flatc-rust = "0.2.0"
 
 [build-dependencies]
 flatc-rust = "*"
+
+
+[lib]
+name = "shuttercomm"
+
+[[bin]]
+name = "shutterctld"
