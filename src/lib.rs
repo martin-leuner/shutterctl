@@ -19,6 +19,7 @@ mod shutterproto {
                                    PlainArgs,
                                    Version};
 
+
         pub struct Session<'a> {
             reader: BufReader<TcpStream>,
             writer: BufWriter<TcpStream>,
@@ -78,27 +79,45 @@ mod shutterproto {
     }
 
     pub mod rpc {
+        use std::io;
+        use std::net::TcpStream;
+
         use crate::shuttermsg::{CmdSystemState,
                                 CmdSystemStateArgs,
                                 Message,
                                 Shuttermsg,
                                 ShuttermsgArgs};
+        use crate::shutterproto::transport::Session;
 
-        fn command_message<'a, T>(builder: &'a mut flatbuffers::FlatBufferBuilder,
-                                  msg_type: Message,
-                                  msg_data: flatbuffers::WIPOffset<T>) -> &'a [u8] {
-            let msg = Shuttermsg::create(builder,
-                                         &ShuttermsgArgs{msg_type: msg_type,
-                                         msg: Some(msg_data.as_union_value())});
-            builder.finish(msg, None);
-            builder.finished_data()
+
+        pub struct Conn<'a> {
+            session: Session<'a>,
+            fbb: flatbuffers::FlatBufferBuilder<'a>,
         }
 
-        pub fn get_state() {
-            let mut fbb = flatbuffers::FlatBufferBuilder::new();
-            let data = CmdSystemState::create(&mut fbb, &CmdSystemStateArgs{});
-            let cmd_buf = command_message(&mut fbb, Message::CmdSystemState, data);
-            // TODO: send the command buffer through a TCP stream, wait for an answer
+        impl<'a> Conn<'a> {
+            pub fn new(stream: TcpStream) -> io::Result<Self> {
+                let session = Session::new(stream)?;
+                let fbb = flatbuffers::FlatBufferBuilder::new();
+                Ok(Self{session, fbb})
+            }
+
+            fn command_message<T>(&mut self,
+                                  msg_type: Message,
+                                  msg_data: flatbuffers::WIPOffset<T>) -> &[u8] {
+                let msg = Shuttermsg::create(&mut self.fbb,
+                                             &ShuttermsgArgs{msg_type: msg_type,
+                                             msg: Some(msg_data.as_union_value())});
+                self.fbb.finish(msg, None);
+                self.fbb.finished_data()
+            }
+
+            pub fn get_state(&mut self) {
+                self.fbb.reset();
+                let data = CmdSystemState::create(&mut self.fbb, &CmdSystemStateArgs{});
+                let cmd_buf = self.command_message(Message::CmdSystemState, data);
+                // TODO: send the command buffer through a TCP stream, wait for an answer
+            }
         }
     }
 }
