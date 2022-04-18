@@ -19,17 +19,19 @@ mod shutterproto {
                                    PlainArgs,
                                    Version};
 
-        pub struct Session {
+        pub struct Session<'a> {
             reader: BufReader<TcpStream>,
             writer: BufWriter<TcpStream>,
+            fbb: flatbuffers::FlatBufferBuilder<'a>,
             id: u8,
         }
 
-        impl Session {
+        impl<'a> Session<'a> {
             pub fn new(stream: TcpStream) -> io::Result<Self> {
                 let reader = io::BufReader::new(stream.try_clone()?);
                 let writer = io::BufWriter::new(stream);
-                Ok(Self{reader, writer, id: 0})
+                let fbb = flatbuffers::FlatBufferBuilder::new();
+                Ok(Self{reader, writer, fbb, id: 0})
             }
 
             pub fn _auth(&mut self, _user: &str, _key: &str) -> io::Result<()> {
@@ -38,14 +40,14 @@ mod shutterproto {
             }
 
             fn send(&mut self, payload: &[u8]) -> io::Result<()> {
-                let mut fbb = flatbuffers::FlatBufferBuilder::new();
+                self.fbb.reset();
 
                 let (param, crypt_type) = if self.id == 0 {
-                    let param = Plain::create(&mut fbb, &PlainArgs{});
+                    let param = Plain::create(&mut self.fbb, &PlainArgs{});
                     (param.as_union_value(), CryptoParam::Plain)
                 } else {
                     // TODO: wrap, fill NaClSecretBox parameters...
-                    let param = NaClSecretBox::create(&mut fbb,
+                    let param = NaClSecretBox::create(&mut self.fbb,
                                                       &NaClSecretBoxArgs{
                                                           session: self.id,
                                                           nonce: None,
@@ -54,18 +56,18 @@ mod shutterproto {
                     (param.as_union_value(), CryptoParam::NaClSecretBox)
                 };
 
-                let payload = fbb.create_vector_direct(payload);
+                let payload = self.fbb.create_vector_direct(payload);
 
-                let header = Shutterheader::create(&mut fbb,
+                let header = Shutterheader::create(&mut self.fbb,
                                                    &ShutterheaderArgs{
                                                        version: Version::Initial,
                                                        crypt_type: crypt_type,
                                                        crypt: Some(param),
                                                        payload: Some(payload)
                                                    });
-                fbb.finish_size_prefixed(header, Some("SHTRMSG"));
+                self.fbb.finish_size_prefixed(header, Some("SHTRMSG"));
 
-                self.writer.write_all(fbb.finished_data())?;
+                self.writer.write_all(self.fbb.finished_data())?;
                 Ok(())
             }
 
@@ -83,8 +85,8 @@ mod shutterproto {
                                 ShuttermsgArgs};
 
         fn command_message<'a, T>(builder: &'a mut flatbuffers::FlatBufferBuilder,
-                                      msg_type: Message,
-                                      msg_data: flatbuffers::WIPOffset<T>) -> &'a [u8] {
+                                  msg_type: Message,
+                                  msg_data: flatbuffers::WIPOffset<T>) -> &'a [u8] {
             let msg = Shuttermsg::create(builder,
                                          &ShuttermsgArgs{msg_type: msg_type,
                                          msg: Some(msg_data.as_union_value())});
