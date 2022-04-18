@@ -3,11 +3,11 @@ enum Version : uint8 {
 }
 
 union CryptoParam {
-    None,
+    Plain,
     NaClSecretBox
 }
 
-table None {
+table Plain {
 }
 
 table NaClSecretBox {
