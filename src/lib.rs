@@ -40,7 +40,7 @@ mod shutterproto {
                 Ok(())
             }
 
-            fn send(&mut self, payload: &[u8]) -> io::Result<()> {
+            pub fn send(&mut self, payload: &[u8]) -> io::Result<()> {
                 self.fbb.reset();
 
                 let (param, crypt_type) = if self.id == 0 {
@@ -72,8 +72,15 @@ mod shutterproto {
                 Ok(())
             }
 
-            fn _receive(&mut self) -> io::Result<&[u8]> {
+            pub fn receive(&mut self) -> io::Result<&[u8]> {
+                // TODO
                 Ok(&[])
+            }
+
+            #[inline]
+            pub fn exec_cmd(&mut self, payload: &[u8]) -> io::Result<&[u8]> {
+                self.send(payload)?;
+                self.receive()
             }
         }
     }
@@ -90,6 +97,16 @@ mod shutterproto {
         use crate::shutterproto::transport::Session;
 
 
+        fn command_message<'b, T>(fbb: &'b mut flatbuffers::FlatBufferBuilder,
+                                  msg_type: Message,
+                                  msg_data: flatbuffers::WIPOffset<T>) -> &'b [u8] {
+            let msg = Shuttermsg::create(fbb,
+                                         &ShuttermsgArgs{msg_type: msg_type,
+                                         msg: Some(msg_data.as_union_value())});
+            fbb.finish(msg, None);
+            fbb.finished_data()
+        }
+
         pub struct Conn<'a> {
             session: Session<'a>,
             fbb: flatbuffers::FlatBufferBuilder<'a>,
@@ -102,21 +119,13 @@ mod shutterproto {
                 Ok(Self{session, fbb})
             }
 
-            fn command_message<T>(&mut self,
-                                  msg_type: Message,
-                                  msg_data: flatbuffers::WIPOffset<T>) -> &[u8] {
-                let msg = Shuttermsg::create(&mut self.fbb,
-                                             &ShuttermsgArgs{msg_type: msg_type,
-                                             msg: Some(msg_data.as_union_value())});
-                self.fbb.finish(msg, None);
-                self.fbb.finished_data()
-            }
-
             pub fn get_state(&mut self) {
                 self.fbb.reset();
                 let data = CmdSystemState::create(&mut self.fbb, &CmdSystemStateArgs{});
-                let cmd_buf = self.command_message(Message::CmdSystemState, data);
-                // TODO: send the command buffer through a TCP stream, wait for an answer
+                let cmd_buf = command_message(&mut self.fbb, Message::CmdSystemState, data);
+                let _answ = self.session.exec_cmd(cmd_buf);
+
+                // TODO: parse answ as Shuttermsg flatbuffer containing a RspSystemState
             }
         }
     }
