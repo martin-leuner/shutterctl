@@ -15,6 +15,9 @@ mod shutterproto {
         HeaderSize,
         BadMagic,
         PayloadSize,
+        UnknownVersion,
+        UnknownCrypto,
+        CommandMissing,
     }
 
     impl fmt::Display for Error {
@@ -34,6 +37,15 @@ mod shutterproto {
                 }
                 Error::PayloadSize => {
                     write!(f, "Message too short to contain full payload")
+                }
+                Error::UnknownVersion => {
+                    write!(f, "Unknown protocol version")
+                }
+                Error::UnknownCrypto => {
+                    write!(f, "Unknown crypto mechanism")
+                }
+                Error::CommandMissing => {
+                    write!(f, "No command message enveloped in header")
                 }
             }
         }
@@ -100,13 +112,13 @@ mod shutterproto {
             }
 
             #[inline]
-            pub fn receive(&mut self) -> Result<&[u8]> {
+            pub fn receive(&mut self) -> Result<Vec<u8>> {
                 let fb = self.tcp_read()?;
-                self.parse_shutterheader_fb(&fb)
+                Ok(self.parse_shutterheader_fb(&fb)?.to_vec())
             }
 
             #[inline]
-            pub fn exec_cmd(&mut self, payload: &[u8]) -> Result<&[u8]> {
+            pub fn exec_cmd(&mut self, payload: &[u8]) -> Result<Vec<u8>> {
                 self.send(payload)?;
                 self.receive()
             }
@@ -140,9 +152,28 @@ mod shutterproto {
                 self.fbb.finish(header, None);
             }
 
-            fn parse_shutterheader_fb(&mut self, fb: &[u8]) -> Result<&[u8]> {
+            fn parse_shutterheader_fb<'b>(&mut self, fb: &'b [u8]) -> Result<&'b [u8]> {
                 let header = shutterheader::root_as_shutterheader(fb)?;
-                Ok(&[])
+                if header.version() != Version::Initial {
+                    return Err(Error::UnknownVersion);
+                }
+                let payload = header.payload();
+                if payload.is_none() {
+                    return Err(Error::CommandMissing);
+                }
+                let payload = payload.unwrap();
+                match header.crypt_type() {
+                    CryptoParam::Plain => {
+                        // Nothing to do
+                    }
+                    CryptoParam::NaClSecretBox => {
+                        // TODO
+                    }
+                    _ => {
+                        return Err(Error::UnknownCrypto);
+                    }
+                }
+                Ok(payload)
             }
 
             fn tcp_write(&mut self) -> Result<()> {
