@@ -130,10 +130,31 @@ mod shutterproto {
                 Ok(())
             }
 
-            pub fn receive(&mut self) -> crate::shutterproto::Result<&[u8]> {
-                let answ = self.reader.fill_buf()?;
-                // TODO: read magic & size
-                let header = shutterheader::root_as_shutterheader(answ)?;
+            fn parse_protocol_header(&mut self) -> Result<Vec<u8>> {
+                let mut answ = self.reader.fill_buf()?.to_vec();
+                let prefix_size = MAGIC.len() + std::mem::size_of::<u32>();
+                if answ.len() < prefix_size {
+                    return Err(Error::HeaderSize);
+                } else if &answ[..MAGIC.len()] != MAGIC {
+                    return Err(Error::BadMagic);
+                }
+                let expected_size: usize =
+                    u32::from_le_bytes(answ[MAGIC.len()..prefix_size]
+                                       .try_into().unwrap())
+                    .try_into().unwrap();
+                let total_size = prefix_size + expected_size;
+                if answ.len() < total_size {
+                    return Err(Error::PayloadSize)
+                }
+                self.reader.consume(total_size);
+                answ.drain(total_size..);
+                answ.drain(..prefix_size);
+                Ok(answ)
+            }
+
+            pub fn receive(&mut self) -> Result<&[u8]> {
+                let fb = self.parse_protocol_header()?;
+                let header = shutterheader::root_as_shutterheader(&fb)?;
                 // TODO: unwrap payload
                 Ok(&[])
             }
