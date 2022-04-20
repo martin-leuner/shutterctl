@@ -93,7 +93,25 @@ mod shutterproto {
                 Ok(())
             }
 
+            #[inline]
             pub fn send(&mut self, payload: &[u8]) -> Result<()> {
+                self.build_shutterheader_fb(payload);
+                self.tcp_write()
+            }
+
+            #[inline]
+            pub fn receive(&mut self) -> Result<&[u8]> {
+                let fb = self.tcp_read()?;
+                self.parse_shutterheader_fb(&fb)
+            }
+
+            #[inline]
+            pub fn exec_cmd(&mut self, payload: &[u8]) -> Result<&[u8]> {
+                self.send(payload)?;
+                self.receive()
+            }
+
+            fn build_shutterheader_fb(&mut self, payload: &[u8]) {
                 self.fbb.reset();
 
                 let (param, crypt_type) = if self.id == 0 {
@@ -120,17 +138,25 @@ mod shutterproto {
                                                        payload: Some(payload)
                                                    });
                 self.fbb.finish(header, None);
+            }
+
+            fn parse_shutterheader_fb(&mut self, fb: &[u8]) -> Result<&[u8]> {
+                let header = shutterheader::root_as_shutterheader(fb)?;
+                Ok(&[])
+            }
+
+            fn tcp_write(&mut self) -> Result<()> {
                 let buf = self.fbb.finished_data();
                 let buf_len: u32 = buf.len().try_into().unwrap();
 
                 self.writer.write_all(MAGIC)?;
                 self.writer.write_all(&buf_len.to_le_bytes())?;
-                self.writer.write_all(self.fbb.finished_data())?;
+                self.writer.write_all(buf)?;
                 self.writer.flush()?;
                 Ok(())
             }
 
-            fn parse_protocol_header(&mut self) -> Result<Vec<u8>> {
+            fn tcp_read(&mut self) -> Result<Vec<u8>> {
                 let mut answ = self.reader.fill_buf()?.to_vec();
                 let prefix_size = MAGIC.len() + std::mem::size_of::<u32>();
                 if answ.len() < prefix_size {
@@ -150,19 +176,6 @@ mod shutterproto {
                 answ.drain(total_size..);
                 answ.drain(..prefix_size);
                 Ok(answ)
-            }
-
-            pub fn receive(&mut self) -> Result<&[u8]> {
-                let fb = self.parse_protocol_header()?;
-                let header = shutterheader::root_as_shutterheader(&fb)?;
-                // TODO: unwrap payload
-                Ok(&[])
-            }
-
-            #[inline]
-            pub fn exec_cmd(&mut self, payload: &[u8]) -> Result<&[u8]> {
-                self.send(payload)?;
-                self.receive()
             }
         }
     }
