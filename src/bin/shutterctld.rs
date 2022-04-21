@@ -2,6 +2,7 @@ use std::net::{TcpListener, TcpStream};
 
 use shutterproto::transport::Session;
 
+
 fn socket_is_readable(stream: &TcpStream) -> bool {
     let mut dummy_buf = [0u8; 1];
     if let Ok(size) = stream.peek(&mut dummy_buf) {

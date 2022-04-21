@@ -17,3 +17,6 @@ name = "shutterproto"
 
 [[bin]]
 name = "shutterctld"
+
+[[bin]]
+name = "shutterclient"
