@@ -3,6 +3,29 @@ use std::net::{TcpListener, TcpStream};
 use shutterproto::transport::Session;
 
 
+pub mod shutterctl {
+    pub struct Motor {
+    }
+
+    pub struct System {
+        motors: Vec<Option<Motor>>,
+    }
+
+    impl System {
+        pub fn from_config() -> anyhow::Result<Self> {
+            let mut motors = Vec::<Option<Motor>>::new();
+            if let Some(proj_dirs) = directories::ProjectDirs::from("", "", "shutterctl") {
+                let _cfgfile = proj_dirs.config_dir().join("config");
+                // TODO: parse cfgfile as TOML, fill motors accordingly
+            } else {
+                // TODO: return some error
+            }
+            Ok(Self{motors})
+        }
+    }
+}
+
+
 fn socket_is_readable(stream: &TcpStream) -> bool {
     let mut dummy_buf = [0u8; 1];
     if let Ok(size) = stream.peek(&mut dummy_buf) {

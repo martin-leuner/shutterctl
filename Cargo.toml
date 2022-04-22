@@ -7,6 +7,9 @@ edition = "2018"
 [dependencies]
 flatbuffers = "2.0.0"
 flatc-rust = "0.2.0"
+directories = "4.0"
+toml = "0.5.9"
+anyhow = "1.0"
 
 [build-dependencies]
 flatc-rust = "*"
