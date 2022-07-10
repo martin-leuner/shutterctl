@@ -47,7 +47,7 @@ impl System {
 
             for motor in config.motor {
                 let id = motor.id;
-                motors[id] = Some(Motor{
+                motors[id - 1] = Some(Motor{
                     config: motor,
                     state: MotorState{
                         state: CurrentMove::Stopped,

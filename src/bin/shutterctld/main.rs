@@ -38,6 +38,7 @@ fn main() {
     // TODO: set up logging
     // TODO: daemonize
 
+    let motor_system = shutterctl::System::from_config();
     let listener = TcpListener::bind("127.0.0.1:1337").expect("Failed to listen on port 1337");
 
     for stream in listener.incoming() {
