@@ -1,4 +1,5 @@
 use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, Mutex};
 
 use shutterproto::transport::Session;
 
@@ -15,21 +16,22 @@ fn socket_is_readable(stream: &TcpStream) -> bool {
     }
 }
 
-fn answer(stream: &TcpStream) -> shutterproto::Result<()> {
+fn answer(stream: &TcpStream, sys: &Arc<Mutex<shutterctl::System>>) -> shutterproto::Result<()> {
     let mut sess = Session::new(stream)?;
 
     while socket_is_readable(stream) {
-        let _cmd_msg = sess.receive()?;
-        // TODO: handle command, build answer message
-        sess.send(&[])?;
+        let cmd_msg = sess.receive()?;
+        let answ = shutterctl::handle_cmd(&cmd_msg, &sys.lock().unwrap())?;
+        sess.send(&answ)?;
     }
 
     Ok(())
 }
 
-fn answer_log_err(stream: &TcpStream) {
-    if let Err(_e) = answer(stream) {
-        // TODO: log error
+fn answer_log_err(stream: &TcpStream, sys: &Arc<Mutex<shutterctl::System>>) {
+    if let Err(e) = answer(stream, sys) {
+        // TODO: real logging
+        eprintln!("Error while handling command: {e}");
     }
 }
 
@@ -38,13 +40,17 @@ fn main() {
     // TODO: set up logging
     // TODO: daemonize
 
-    let motor_system = shutterctl::System::from_config();
+    let motor_system = shutterctl::System::from_config().expect("Failed to parse config");
+    let motor_system = Arc::new(Mutex::new(motor_system));
+
+    // TODO: read port from config/command line
     let listener = TcpListener::bind("127.0.0.1:1337").expect("Failed to listen on port 1337");
 
     for stream in listener.incoming() {
         if let Ok(stream) = stream {
+            let sys = Arc::clone(&motor_system);
             std::thread::spawn(move || {
-                answer_log_err(&stream)
+                answer_log_err(&stream, &sys)
             });
         }
     }

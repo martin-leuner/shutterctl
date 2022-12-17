@@ -1,5 +1,6 @@
 use serde_derive::Deserialize;
 use shutterproto::motor::{Motor, MotorConfig, MotorState, CurrentMove};
+use shutterproto::rpc;
 
 #[derive(Deserialize)]
 struct Config {
@@ -38,4 +39,10 @@ impl System {
             Err(anyhow::anyhow!("No config file found"))
         }
     }
+}
+
+pub fn handle_cmd(cmd_msg: &[u8], sys: &System) -> shutterproto::Result<Vec<u8>> {
+    let _cmd = rpc::parse_cmd(cmd_msg);
+    // TODO...
+    Ok(vec![])
 }
