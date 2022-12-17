@@ -2,7 +2,7 @@
 name = "shutterctl"
 version = "0.1.0"
 authors = ["Martin Leuner <martin.leuner@rwth-aachen.de>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 flatbuffers = "22.10.26"

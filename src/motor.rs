@@ -1,4 +1,5 @@
 use serde_derive::Deserialize;
+use crate::shuttermsg::DriveCmdType;
 
 pub struct Motor {
     pub config: MotorConfig,
@@ -23,4 +24,17 @@ pub enum CurrentMove {
     Stopped,
     Up,
     Down,
+}
+
+impl TryFrom<DriveCmdType> for CurrentMove {
+    type Error = crate::Error;
+
+    fn try_from(t: DriveCmdType) -> crate::Result<Self> {
+        match t {
+            DriveCmdType::Stop => Ok(CurrentMove::Stopped),
+            DriveCmdType::Up => Ok(CurrentMove::Up),
+            DriveCmdType::Down => Ok(CurrentMove::Down),
+            _ => Err(crate::Error::UnknownMotorState),
+        }
+    }
 }
