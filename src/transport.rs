@@ -3,14 +3,14 @@ use std::io::{self, BufRead, BufReader, BufWriter, Write};
 use std::net::TcpStream;
 
 use crate::shutterheader::{self,
-Shutterheader,
-ShutterheaderArgs,
-CryptoParam,
-NaClSecretBox,
-NaClSecretBoxArgs,
-Plain,
-PlainArgs,
-Version};
+                           Shutterheader,
+                           ShutterheaderArgs,
+                           CryptoParam,
+                           NaClSecretBox,
+                           NaClSecretBoxArgs,
+                           Plain,
+                           PlainArgs,
+                           Version};
 use crate::{Error, Result};
 
 const MAGIC: &[u8] = b"SHTR";
