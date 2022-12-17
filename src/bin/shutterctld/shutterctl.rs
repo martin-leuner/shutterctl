@@ -1,33 +1,9 @@
 use serde_derive::Deserialize;
-
-pub struct Motor {
-    config: MotorConfig,
-    state: MotorState,
-}
-
-#[derive(Deserialize)]
-pub struct MotorConfig {
-    name: String,
-    id: usize,
-    runtime_ms: u32,
-}
+use shutterproto::motor::{Motor, MotorConfig, MotorState, CurrentMove};
 
 #[derive(Deserialize)]
 struct Config {
     motor: Vec<MotorConfig>,
-}
-
-pub struct MotorState {
-    state: CurrentMove,
-    known_min_percentage: u8,
-    known_max_percentage: u8,
-    last_stop: std::time::Instant,
-}
-
-pub enum CurrentMove {
-    Stopped,
-    Up,
-    Down,
 }
 
 pub struct System {

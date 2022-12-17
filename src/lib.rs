@@ -1,3 +1,4 @@
+pub mod motor;
 pub mod rpc;
 pub mod transport;
 
