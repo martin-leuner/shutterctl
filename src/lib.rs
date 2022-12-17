@@ -20,6 +20,8 @@ pub enum Error {
     CommandMissing,
     BadAnswer,
     UnknownMotorState,
+    UnknownCommand,
+    BadCommand,
 }
 
 impl fmt::Display for Error {
@@ -54,6 +56,12 @@ impl fmt::Display for Error {
             }
             Error::UnknownMotorState => {
                 write!(f, "Unknown shutter movement reported")
+            }
+            Error::UnknownCommand => {
+                write!(f, "Unknown command")
+            }
+            Error::BadCommand => {
+                write!(f, "Bad command message (command data incomplete)")
             }
         }
     }
