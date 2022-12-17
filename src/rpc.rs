@@ -40,18 +40,9 @@ impl<'a> Conn<'a> {
         let answ = self.session.exec_cmd(cmd_buf)?;
 
         let state = shuttermsg::root_as_shuttermsg(&answ)?;
-        let state = match state.msg_as_rsp_system_state() {
-            None => {
-                return Err(Error::BadAnswer);
-            }
-            Some(x) => x
-        };
-        let state = match state.shutters() {
-            None => {
-                return Err(Error::BadAnswer);
-            }
-            Some(x) => x
-        };
+        let state = state.msg_as_rsp_system_state().ok_or(Error::BadAnswer)?;
+        let state = state.shutters().ok_or(Error::BadAnswer)?;
+
         let mut res = Vec::<motor::Motor>::new();
         for m in state.iter() {
             res.push(motor::Motor{
@@ -74,6 +65,7 @@ impl<'a> Conn<'a> {
                     last_stop: None,
                 }});
         }
+
         Ok(res)
     }
 }

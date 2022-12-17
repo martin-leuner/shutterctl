@@ -87,12 +87,7 @@ impl<'a> Session<'a> {
         if header.version() != Version::Initial {
             return Err(Error::UnknownVersion);
         }
-        let payload = match header.payload() {
-            None => {
-                return Err(Error::CommandMissing);
-            }
-            Some(x) => x.bytes()
-        };
+        let payload = header.payload().ok_or(Error::CommandMissing)?;
         match header.crypt_type() {
             CryptoParam::Plain => {
                 // Nothing to do
@@ -104,7 +99,7 @@ impl<'a> Session<'a> {
                 return Err(Error::UnknownCrypto);
             }
         }
-        Ok(payload)
+        Ok(payload.bytes())
     }
 
     fn tcp_write(&mut self) -> Result<()> {
