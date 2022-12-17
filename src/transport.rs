@@ -70,7 +70,7 @@ impl<'a> Session<'a> {
             (param.as_union_value(), CryptoParam::NaClSecretBox)
         };
 
-        let payload = self.fbb.create_vector_direct(payload);
+        let payload = self.fbb.create_vector(payload);
 
         let header = Shutterheader::create(&mut self.fbb,
                                            &ShutterheaderArgs{
@@ -91,7 +91,7 @@ impl<'a> Session<'a> {
             None => {
                 return Err(Error::CommandMissing);
             }
-            Some(x) => x
+            Some(x) => x.bytes()
         };
         match header.crypt_type() {
             CryptoParam::Plain => {

@@ -5,7 +5,7 @@ authors = ["Martin Leuner <martin.leuner@rwth-aachen.de>"]
 edition = "2018"
 
 [dependencies]
-flatbuffers = "2.0.0"
+flatbuffers = "22.10.26"
 flatc-rust = "0.2.0"
 directories = "4.0"
 serde = "1.0"
