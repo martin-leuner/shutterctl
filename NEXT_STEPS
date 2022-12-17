@@ -1,0 +1,11 @@
+- implements answer builder for server-side FlatBuffer answers in rpc.rs
+- implement System::get_state in shutterctld
+- pretty-print get_state output in shutterclient
+- test this
+- implement drive stubs (might be easier with async due to async sleeps?)
+- move from threads to async (might do this earlier)
+- implement nacl crypto with hard-coded keys
+- implement challenge-auth
+- implement key table/user sessions
+- implement per-command/user access control
+- implement drive backend
