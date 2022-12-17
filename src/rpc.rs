@@ -1,11 +1,13 @@
 use std::net::TcpStream;
 
-use crate::shuttermsg::{CmdSystemState,
-CmdSystemStateArgs,
-Message,
-Shuttermsg,
-ShuttermsgArgs};
-use crate::{Result, transport::Session};
+use crate::shuttermsg::{self,
+                        CmdSystemState,
+                        CmdSystemStateArgs,
+                        DriveCmdType,
+                        Message,
+                        Shuttermsg,
+                        ShuttermsgArgs};
+use crate::{Error, Result, motor, transport::Session};
 
 
 fn command_message<'b, T>(fbb: &'b mut flatbuffers::FlatBufferBuilder,
@@ -30,12 +32,48 @@ impl<'a> Conn<'a> {
         Ok(Self{session, fbb})
     }
 
-    pub fn get_state(&mut self) {
+    pub fn get_state(&mut self) -> Result<Vec<motor::Motor>> {
         self.fbb.reset();
         let data = CmdSystemState::create(&mut self.fbb, &CmdSystemStateArgs{});
         let cmd_buf = command_message(&mut self.fbb, Message::CmdSystemState, data);
-        let _answ = self.session.exec_cmd(cmd_buf);
 
-        // TODO: parse answ as Shuttermsg flatbuffer containing a RspSystemState
+        let answ = self.session.exec_cmd(cmd_buf)?;
+
+        let state = shuttermsg::root_as_shuttermsg(&answ)?;
+        let state = match state.msg_as_rsp_system_state() {
+            None => {
+                return Err(Error::BadAnswer);
+            }
+            Some(x) => x
+        };
+        let state = match state.shutters() {
+            None => {
+                return Err(Error::BadAnswer);
+            }
+            Some(x) => x
+        };
+        let mut res = Vec::<motor::Motor>::new();
+        for m in state.iter() {
+            res.push(motor::Motor{
+                config: motor::MotorConfig{
+                    name: m.description().unwrap_or_default().to_string(),
+                    id: m.id(),
+                    runtime_ms: None,
+                },
+                state: motor::MotorState{
+                    state: match m.moving() {
+                        DriveCmdType::Stop => motor::CurrentMove::Stopped,
+                        DriveCmdType::Up => motor::CurrentMove::Up,
+                        DriveCmdType::Down => motor::CurrentMove::Down,
+                        _ => {
+                            return Err(Error::UnknownMotorState)
+                        }
+                    },
+                    known_min_percentage: m.known_min_percentage(),
+                    known_max_percentage: m.known_max_percentage(),
+                    last_stop: None,
+                }});
+        }
+        Ok(res)
     }
 }

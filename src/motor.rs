@@ -8,15 +8,15 @@ pub struct Motor {
 #[derive(Deserialize)]
 pub struct MotorConfig {
     pub name: String,
-    pub id: usize,
-    pub runtime_ms: u32,
+    pub id: u8,
+    pub runtime_ms: Option<u32>,
 }
 
 pub struct MotorState {
     pub state: CurrentMove,
     pub known_min_percentage: u8,
     pub known_max_percentage: u8,
-    pub last_stop: std::time::Instant,
+    pub last_stop: Option<std::time::Instant>,
 }
 
 pub enum CurrentMove {

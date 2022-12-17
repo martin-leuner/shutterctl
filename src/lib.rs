@@ -18,6 +18,8 @@ pub enum Error {
     UnknownVersion,
     UnknownCrypto,
     CommandMissing,
+    BadAnswer,
+    UnknownMotorState,
 }
 
 impl fmt::Display for Error {
@@ -46,6 +48,12 @@ impl fmt::Display for Error {
             }
             Error::CommandMissing => {
                 write!(f, "No command message enveloped in header")
+            }
+            Error::BadAnswer => {
+                write!(f, "Bad answer message for this command")
+            }
+            Error::UnknownMotorState => {
+                write!(f, "Unknown shutter movement reported")
             }
         }
     }

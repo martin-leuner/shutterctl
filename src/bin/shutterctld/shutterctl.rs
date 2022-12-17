@@ -19,17 +19,17 @@ impl System {
 
             let max_id = config.motor.iter().max_by_key(|x| x.id).unwrap().id;
             let mut motors = Vec::<Option<Motor>>::new();
-            motors.resize_with(max_id, || None);
+            motors.resize_with(max_id.into(), || None);
 
             for motor in config.motor {
                 let id = motor.id;
-                motors[id - 1] = Some(Motor{
+                motors[Into::<usize>::into(id) - 1] = Some(Motor{
                     config: motor,
                     state: MotorState{
                         state: CurrentMove::Stopped,
                         known_min_percentage: 0,
                         known_max_percentage: 100,
-                        last_stop: std::time::Instant::now(),
+                        last_stop: Some(std::time::Instant::now()),
                     }});
             }
             Ok(Self{motors})
