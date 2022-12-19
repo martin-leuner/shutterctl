@@ -7,6 +7,10 @@ use crate::motor::{Motor,
 use crate::shuttermsg::{self,
                         CmdSystemState,
                         CmdSystemStateArgs,
+                        RspSystemState,
+                        RspSystemStateArgs,
+                        ShutterState,
+                        ShutterStateArgs,
                         DriveCmdType,
                         Message,
                         Shuttermsg,
@@ -112,14 +116,41 @@ pub fn parse_cmd(cmd_msg: &[u8]) -> Result<CommandData> {
                 instructions: instr,
             })
         }
+
         Message::CmdSystemState => {
             Ok(CommandData{
                 cmd: Command::GetState,
                 instructions: Vec::new(),
             })
         }
+
         _ => {
             Err(Error::UnknownCommand)
         }
     }
+}
+
+pub fn build_get_state_answer(state: &[Motor]) -> Result<Vec<u8>> {
+    let mut fbb = flatbuffers::FlatBufferBuilder::new();
+
+    // TODO: can probably replace this loop by a Vec::map or something
+    let mut data = Vec::<flatbuffers::WIPOffset<ShutterState>>::new();
+    for m in state.iter() {
+        let s = fbb.create_string(&m.config.name);
+        data.push(ShutterState::create(&mut fbb, &ShutterStateArgs{
+            id: m.config.id,
+            description: Some(s),
+            known_min_percentage: m.state.known_min_percentage,
+            known_max_percentage: m.state.known_max_percentage,
+            moving: match m.state.state {
+                CurrentMove::Stopped => DriveCmdType::Stop,
+                CurrentMove::Up => DriveCmdType::Up,
+                CurrentMove::Down => DriveCmdType::Down,
+            },
+        }))
+    }
+
+    let data = fbb.create_vector(&data);
+    let data = RspSystemState::create(&mut fbb, &RspSystemStateArgs{shutters: Some(data)});
+    Ok(command_message(&mut fbb, Message::RspSystemState, data).to_vec())
 }
