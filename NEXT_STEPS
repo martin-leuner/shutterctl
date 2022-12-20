@@ -1,4 +1,3 @@
-- implement answer builder for server-side FlatBuffer answers in rpc.rs
 - pretty-print get_state output in shutterclient
 - test this
 - implement drive stubs (might be easier with async due to async sleeps?)

@@ -1,5 +1,6 @@
 enum ErrorCode : uint16 {
-    Ok
+    Ok,
+    Error
 }
 
 table RspStatus {

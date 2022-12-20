@@ -11,6 +11,9 @@ use crate::shuttermsg::{self,
                         RspSystemStateArgs,
                         ShutterState,
                         ShutterStateArgs,
+                        RspStatus,
+                        RspStatusArgs,
+                        ErrorCode,
                         DriveCmdType,
                         Message,
                         Shuttermsg,
@@ -128,6 +131,22 @@ pub fn parse_cmd(cmd_msg: &[u8]) -> Result<CommandData> {
             Err(Error::UnknownCommand)
         }
     }
+}
+
+pub fn build_status_answer(err: Result<()>) -> Result<Vec<u8>> {
+    let mut fbb = flatbuffers::FlatBufferBuilder::new();
+    let data = match err {
+        Ok(_e) => RspStatusArgs{
+            code: ErrorCode::Ok,
+            what: None,
+        },
+        Err(e) => RspStatusArgs{
+            code: ErrorCode::Error,
+            what: Some(fbb.create_string(&e.to_string())),
+        },
+    };
+    let data = RspStatus::create(&mut fbb, &data);
+    Ok(command_message(&mut fbb, Message::RspStatus, data).to_vec())
 }
 
 pub fn build_get_state_answer(state: &[Motor]) -> Result<Vec<u8>> {
