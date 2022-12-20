@@ -1,18 +1,20 @@
 use serde_derive::Deserialize;
 use crate::shuttermsg::DriveCmdType;
 
+#[derive(Clone)]
 pub struct Motor {
     pub config: MotorConfig,
     pub state: MotorState,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone,Deserialize)]
 pub struct MotorConfig {
     pub name: String,
     pub id: u8,
     pub runtime_ms: Option<u32>,
 }
 
+#[derive(Clone)]
 pub struct MotorState {
     pub state: CurrentMove,
     pub known_min_percentage: u8,
@@ -20,6 +22,7 @@ pub struct MotorState {
     pub last_stop: Option<std::time::Instant>,
 }
 
+#[derive(Clone)]
 pub enum CurrentMove {
     Stopped,
     Up,

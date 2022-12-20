@@ -1,5 +1,4 @@
-- implements answer builder for server-side FlatBuffer answers in rpc.rs
-- implement System::get_state in shutterctld
+- implement answer builder for server-side FlatBuffer answers in rpc.rs
 - pretty-print get_state output in shutterclient
 - test this
 - implement drive stubs (might be easier with async due to async sleeps?)

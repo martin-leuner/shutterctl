@@ -132,8 +132,6 @@ pub fn parse_cmd(cmd_msg: &[u8]) -> Result<CommandData> {
 
 pub fn build_get_state_answer(state: &[Motor]) -> Result<Vec<u8>> {
     let mut fbb = flatbuffers::FlatBufferBuilder::new();
-
-    // TODO: can probably replace this loop by a Vec::map or something
     let mut data = Vec::<flatbuffers::WIPOffset<ShutterState>>::new();
     for m in state.iter() {
         let s = fbb.create_string(&m.config.name);

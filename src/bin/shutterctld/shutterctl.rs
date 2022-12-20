@@ -39,10 +39,30 @@ impl System {
             Err(anyhow::anyhow!("No config file found"))
         }
     }
+
+    fn strip_state(m: &Option<Motor>) -> Option<Motor> {
+        match m {
+            None => None,
+            Some(m) => {
+                let mut res = m.clone();
+                res.config.runtime_ms = None;
+                res.state.last_stop = None;
+                Some(res)
+            }
+        }
+    }
+
+    pub fn get_state(&self) -> Vec<Motor> {
+        self.motors.iter()
+            .filter_map(Self::strip_state)
+            .collect()
+    }
 }
 
 pub fn handle_cmd(cmd_msg: &[u8], sys: &System) -> shutterproto::Result<Vec<u8>> {
-    let _cmd = rpc::parse_cmd(cmd_msg);
-    // TODO...
-    Ok(vec![])
+    let cmd = rpc::parse_cmd(cmd_msg)?;
+    match cmd.cmd {
+        rpc::Command::GetState => rpc::build_get_state_answer(&sys.get_state()),
+        rpc::Command::Drive => todo!(),
+    }
 }
