@@ -1,13 +1,15 @@
 use serde_derive::Deserialize;
 use crate::shuttermsg::DriveCmdType;
 
+use std::fmt;
+
 #[derive(Clone)]
 pub struct Motor {
     pub config: MotorConfig,
     pub state: MotorState,
 }
 
-#[derive(Clone,Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct MotorConfig {
     pub name: String,
     pub id: u8,
@@ -22,11 +24,17 @@ pub struct MotorState {
     pub last_stop: Option<std::time::Instant>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum CurrentMove {
     Stopped,
     Up,
     Down,
+}
+
+impl fmt::Display for CurrentMove {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl TryFrom<DriveCmdType> for CurrentMove {
