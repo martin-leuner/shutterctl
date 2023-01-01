@@ -1,6 +1,7 @@
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex};
 
+use shutterproto::rpc;
 use shutterproto::transport::Session;
 
 pub mod shutterctl;
@@ -21,8 +22,15 @@ fn answer(stream: &TcpStream, sys: &Arc<Mutex<shutterctl::System>>) -> shutterpr
 
     while socket_is_readable(stream) {
         let cmd_msg = sess.receive()?;
-        let answ = shutterctl::handle_cmd(&cmd_msg, &sys.lock().unwrap())?;
-        sess.send(&answ)?;
+        match shutterctl::handle_cmd(&cmd_msg, &sys.lock().unwrap()) {
+            Ok(answ) => {
+                sess.send(&answ)?;
+            },
+            Err(e) => {
+                let answ = rpc::build_status_answer(&Err(e))?;
+                sess.send(&answ)?;
+            },
+        };
     }
 
     Ok(())

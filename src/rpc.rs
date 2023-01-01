@@ -133,7 +133,7 @@ pub fn parse_cmd(cmd_msg: &[u8]) -> Result<CommandData> {
     }
 }
 
-pub fn build_status_answer(err: Result<()>) -> Result<Vec<u8>> {
+pub fn build_status_answer(err: &Result<()>) -> Result<Vec<u8>> {
     let mut fbb = flatbuffers::FlatBufferBuilder::new();
     let data = match err {
         Ok(_e) => RspStatusArgs{

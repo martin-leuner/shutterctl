@@ -1,4 +1,3 @@
-- error handling in daemon: return appropriate error messages
 - implement drive stubs (might be easier with async due to async sleeps?)
 - move from threads to async (might do this earlier)
 - implement nacl crypto with hard-coded keys
