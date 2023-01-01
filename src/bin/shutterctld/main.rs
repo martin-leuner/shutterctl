@@ -22,7 +22,7 @@ fn answer(stream: &TcpStream, sys: &Arc<Mutex<shutterctl::System>>) -> shutterpr
 
     while socket_is_readable(stream) {
         let cmd_msg = sess.receive()?;
-        match shutterctl::handle_cmd(&cmd_msg, &sys.lock().unwrap()) {
+        match shutterctl::handle_cmd(&cmd_msg, &mut sys.lock().unwrap()) {
             Ok(answ) => {
                 sess.send(&answ)?;
             },

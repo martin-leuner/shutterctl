@@ -57,12 +57,16 @@ impl System {
             .filter_map(Self::strip_state)
             .collect()
     }
+
+    pub fn drive(&mut self, instr: &Vec<rpc::DriveInstruction>) -> shutterproto::Result<()> {
+        todo!()
+    }
 }
 
-pub fn handle_cmd(cmd_msg: &[u8], sys: &System) -> shutterproto::Result<Vec<u8>> {
+pub fn handle_cmd(cmd_msg: &[u8], sys: &mut System) -> shutterproto::Result<Vec<u8>> {
     let cmd = rpc::parse_cmd(cmd_msg)?;
     match cmd.cmd {
         rpc::Command::GetState => rpc::build_get_state_answer(&sys.get_state()),
-        rpc::Command::Drive => todo!(),
+        rpc::Command::Drive => rpc::build_status_answer(&sys.drive(&cmd.instructions)),
     }
 }
