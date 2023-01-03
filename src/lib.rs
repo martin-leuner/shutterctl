@@ -22,6 +22,7 @@ pub enum Error {
     UnknownMotorState,
     UnknownCommand,
     BadCommand,
+    InvalidMotorId,
 }
 
 impl fmt::Display for Error {
@@ -62,6 +63,9 @@ impl fmt::Display for Error {
             }
             Error::BadCommand => {
                 write!(f, "Bad command message (command data incomplete)")
+            }
+            Error::InvalidMotorId => {
+                write!(f, "Invalid motor ID in command message")
             }
         }
     }

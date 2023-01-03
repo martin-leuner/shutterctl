@@ -58,8 +58,20 @@ impl System {
             .collect()
     }
 
-    pub fn drive(&mut self, instr: &Vec<rpc::DriveInstruction>) -> shutterproto::Result<()> {
+    fn handle_drive_cmd(mot_state: &mut MotorState, cmd: &rpc::DriveInstruction) -> shutterproto::Result<()> {
         todo!()
+    }
+
+    pub fn drive(&mut self, instr: &Vec<rpc::DriveInstruction>) -> shutterproto::Result<()> {
+        // Check whether any targeted motor is not present in the config
+        if instr.iter().any(|x| self.motors.get(x.motor as usize).unwrap_or(&None).is_none()) {
+            return Err(shutterproto::Error::InvalidMotorId);
+        }
+        // Pass motor's state along with the instructions into handler
+        for cmd in instr {
+            Self::handle_drive_cmd(&mut self.motors.get_mut(cmd.motor as usize).unwrap().as_mut().unwrap().state, &cmd)?;
+        }
+        Ok(())
     }
 }
 
