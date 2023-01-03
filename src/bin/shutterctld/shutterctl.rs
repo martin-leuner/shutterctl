@@ -27,7 +27,7 @@ impl System {
                 motors[Into::<usize>::into(id) - 1] = Some(Motor{
                     config: motor,
                     state: MotorState{
-                        state: CurrentMove::Stopped,
+                        state: CurrentMove::Stop,
                         known_min_percentage: 0,
                         known_max_percentage: 100,
                         last_stop: Some(std::time::Instant::now()),
@@ -58,8 +58,32 @@ impl System {
             .collect()
     }
 
-    fn handle_drive_cmd(mot_state: &mut MotorState, cmd: &rpc::DriveInstruction) -> shutterproto::Result<()> {
-        todo!()
+    fn handle_drive_cmd(state: &mut MotorState, cmd: &rpc::DriveInstruction) -> shutterproto::Result<()> {
+        match cmd.movement {
+            Some(mv) => {
+                match mv {
+                    CurrentMove::Stop => {
+                        // TODO: actually stop motor
+                        // TODO: recalculate min/max percentage
+                        state.last_stop = Some(std::time::Instant::now());
+                    },
+                    CurrentMove::Up => {
+                        // TODO
+                    },
+                    CurrentMove::Down => {
+                        // TODO
+                    },
+                }
+                state.state = mv;
+            },
+            None => {
+                if cmd.target_percentage.is_none() {
+                    return Err(shutterproto::Error::BadCommand);
+                }
+                // TODO
+            },
+        }
+        Ok(())
     }
 
     pub fn drive(&mut self, instr: &Vec<rpc::DriveInstruction>) -> shutterproto::Result<()> {

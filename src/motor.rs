@@ -24,9 +24,9 @@ pub struct MotorState {
     pub last_stop: Option<std::time::Instant>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum CurrentMove {
-    Stopped,
+    Stop,
     Up,
     Down,
 }
@@ -42,7 +42,7 @@ impl TryFrom<DriveCmdType> for CurrentMove {
 
     fn try_from(t: DriveCmdType) -> crate::Result<Self> {
         match t {
-            DriveCmdType::Stop => Ok(CurrentMove::Stopped),
+            DriveCmdType::Stop => Ok(CurrentMove::Stop),
             DriveCmdType::Up => Ok(CurrentMove::Up),
             DriveCmdType::Down => Ok(CurrentMove::Down),
             _ => Err(crate::Error::UnknownMotorState),

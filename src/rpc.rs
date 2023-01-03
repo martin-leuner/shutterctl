@@ -160,7 +160,7 @@ pub fn build_get_state_answer(state: &[Motor]) -> Result<Vec<u8>> {
             known_min_percentage: m.state.known_min_percentage,
             known_max_percentage: m.state.known_max_percentage,
             moving: match m.state.state {
-                CurrentMove::Stopped => DriveCmdType::Stop,
+                CurrentMove::Stop => DriveCmdType::Stop,
                 CurrentMove::Up => DriveCmdType::Up,
                 CurrentMove::Down => DriveCmdType::Down,
             },
