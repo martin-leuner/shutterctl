@@ -66,7 +66,7 @@ impl<'a> Conn<'a> {
                     state: CurrentMove::try_from(m.moving())?,
                     known_min_percentage: m.known_min_percentage(),
                     known_max_percentage: m.known_max_percentage(),
-                    last_stop: None,
+                    last_change: None,
                 }});
         }
 

@@ -21,7 +21,7 @@ pub struct MotorState {
     pub state: CurrentMove,
     pub known_min_percentage: u8,
     pub known_max_percentage: u8,
-    pub last_stop: Option<std::time::Instant>,
+    pub last_change: Option<std::time::Instant>,
 }
 
 #[derive(Copy, Clone, Debug)]

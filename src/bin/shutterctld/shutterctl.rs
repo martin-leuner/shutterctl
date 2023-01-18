@@ -30,7 +30,7 @@ impl System {
                         state: CurrentMove::Stop,
                         known_min_percentage: 0,
                         known_max_percentage: 100,
-                        last_stop: Some(std::time::Instant::now()),
+                        last_change: Some(std::time::Instant::now()),
                     }});
             }
             Ok(Self{motors})
@@ -46,7 +46,7 @@ impl System {
             Some(m) => {
                 let mut res = m.clone();
                 res.config.runtime_ms = None;
-                res.state.last_stop = None;
+                res.state.last_change = None;
                 Some(res)
             }
         }
@@ -58,14 +58,46 @@ impl System {
             .collect()
     }
 
-    fn handle_drive_cmd(state: &mut MotorState, cmd: &rpc::DriveInstruction) -> shutterproto::Result<()> {
+    fn recalc_position(state: &MotorState, runtime: u32) -> (u8, u8) {
+        let ms_elapsed = state.last_change
+            .unwrap_or(std::time::Instant::now())
+            .elapsed()
+            .as_millis();
+        let ms_elapsed: u32 = ms_elapsed.try_into().unwrap_or(u32::MAX);
+        let runtime = std::cmp::max(runtime, 1);
+        let percentage_change: u8 = (ms_elapsed.saturating_mul(100)/runtime)
+            .try_into().unwrap_or(100);
+
+        let mut new_min = state.known_min_percentage;
+        let mut new_max = state.known_max_percentage;
+        match state.state {
+            CurrentMove::Stop => { }
+            CurrentMove::Up => {
+                new_min = std::cmp::min(new_min.saturating_add(percentage_change), 100);
+                if new_min > new_max {
+                    new_max = new_min;
+                }
+            }
+            CurrentMove::Down => {
+                new_max = new_max.saturating_sub(percentage_change);
+                if new_max < new_min {
+                    new_min = new_max;
+                }
+            }
+        }
+        (new_min, new_max)
+    }
+
+    fn handle_drive_cmd(state: &mut MotorState,
+                        runtime: u32,
+                        cmd: &rpc::DriveInstruction) -> shutterproto::Result<()> {
         match cmd.movement {
             Some(mv) => {
                 match mv {
                     CurrentMove::Stop => {
                         // TODO: actually stop motor
                         // TODO: recalculate min/max percentage
-                        state.last_stop = Some(std::time::Instant::now());
+                        state.last_change = Some(std::time::Instant::now());
                     },
                     CurrentMove::Up => {
                         // TODO
@@ -93,7 +125,9 @@ impl System {
         }
         // Pass motor's state along with the instructions into handler
         for cmd in instr {
-            Self::handle_drive_cmd(&mut self.motors.get_mut(cmd.motor as usize).unwrap().as_mut().unwrap().state, &cmd)?;
+            let motor = self.motors.get_mut(cmd.motor as usize).unwrap().as_mut().unwrap();
+            // If runtime is not set (which shouldn't ever happen), use a default guesstimate
+            Self::handle_drive_cmd(&mut motor.state, motor.config.runtime_ms.unwrap_or(30000), &cmd)?;
         }
         Ok(())
     }
